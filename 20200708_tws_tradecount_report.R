@@ -3,8 +3,8 @@ library(lubridate)
 library(xlsx)
 library(stringr)
 
+print("Tws and Finalreport Trade Count")
 
-print("This commit is from server")
 
 input_dir <- "Documents/Office-Work/tws_trades_mapping/input/20200702/"
 list.files(input_dir)
