@@ -4,7 +4,7 @@ library(xlsx)
 library(stringr)
 
 
-print("this is the demo of the git tutorial")
+print("This commit is from server")
 
 input_dir <- "Documents/Office-Work/tws_trades_mapping/input/20200702/"
 list.files(input_dir)
