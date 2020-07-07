@@ -1,3 +1,4 @@
+
 library(dplyr)
 library(lubridate)
 library(xlsx)
@@ -5,15 +6,17 @@ library(stringr)
 
 print("Tws and Finalreport Trade Count")
 
-
-input_dir <- "Documents/Office-Work/tws_trades_mapping/input/20200702/"
+today_date <- Sys.Date()
+today_date <- gsub("-","",today_date)
+today_date
+input_dir <- paste0("D:/Qcollector_Data/tws_statments/",today_date,"/")
 list.files(input_dir)
-output_dir <-"Documents/Office-Work/tws_trades_mapping/output/20200630/"
-
+output_dir <- paste0("D:/Qcollector_Data/tws_trades_count/",today_date,"/")
 dir.create(output_dir)
 list.files(output_dir)
 
-pairs_strategies <- read.csv("Documents/Office-Work/tws_trades_mapping/input/pairs_strategy_currency_timing_reference.csv",stringsAsFactors = FALSE)
+pairs_strategies <- read.csv("D:/utility_codes/tws_trade_mapping/input/pair_strategy_currency_timing_refernce.csv",stringsAsFactors = FALSE)
+names(pairs_strategies)[1] <- "pair_strategy"
 dim(pairs_strategies)
 pairs_strategies$pair_strategy
 
@@ -30,6 +33,11 @@ for (j in 1:nrow(pairs_strategies)) {
   
   statement_file <- grep(paste0(temp_strategy,"_tws_statement"),list.files(input_dir),value = TRUE)
   statement_file
+  if (length(statement_file) == 0) {
+    print(paste0("file not found for ",temp_strategy," !!"))
+    next
+  }
+  
   statement <-read.csv(paste0(input_dir,statement_file),stringsAsFactors = FALSE)
   dim(statement)
   
@@ -59,8 +67,6 @@ for (j in 1:nrow(pairs_strategies)) {
     dplyr::group_by(`lookup_symbol` = paste0(`Symbol`,"_",`Type`,"_",`TradeDate`))
   View(statement3)
   colnames(statement3) <- paste0("TWS_",colnames(statement3))
-  
-  
   
   closed_file <- grep(paste0(temp_strategy,"_finalpositionreport_closed"),list.files(input_dir),value = TRUE)
   closed_file
@@ -232,6 +238,8 @@ for (j in 1:nrow(pairs_strategies)) {
   
   final_report <- all_trades2 %>% 
     dplyr::left_join(statement3,by=c("lookup_symbol" = "TWS_lookup_symbol"))
+  
+  write.csv(final_report,paste0(output_dir,today_date,"_",temp_strategy,"_trade_count.csv"),row.names = FALSE)
   
 }
 
