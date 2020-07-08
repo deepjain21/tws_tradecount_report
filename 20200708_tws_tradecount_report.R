@@ -1,4 +1,3 @@
-
 library(dplyr)
 library(lubridate)
 library(xlsx)
@@ -9,6 +8,9 @@ print("Tws and Finalreport Trade Count")
 today_date <- Sys.Date()
 today_date <- gsub("-","",today_date)
 today_date
+report_date <- Sys.Date() - 1
+report_date <- gsub("-","",report_date)
+report_date
 input_dir <- paste0("D:/Qcollector_Data/tws_statments/",today_date,"/")
 list.files(input_dir)
 output_dir <- paste0("D:/Qcollector_Data/tws_trades_count/",today_date,"/")
@@ -64,8 +66,9 @@ for (j in 1:nrow(pairs_strategies)) {
   statement3 <- statement2 %>% 
     dplyr::group_by(`Symbol`,`TradeDate`,`Type`) %>% 
     dplyr::summarise(`TotalCount` = sum(`Quantity`)) %>% 
-    dplyr::group_by(`lookup_symbol` = paste0(`Symbol`,"_",`Type`,"_",`TradeDate`))
-  View(statement3)
+    dplyr::group_by(`lookup_symbol` = paste0(`Symbol`,"_",`Type`,"_",`TradeDate`)) %>% 
+    dplyr::mutate(`TotalCount` = abs(`TotalCount`)) %>% 
+    dplyr::filter(`TradeDate` == report_date)
   colnames(statement3) <- paste0("TWS_",colnames(statement3))
   
   closed_file <- grep(paste0(temp_strategy,"_finalpositionreport_closed"),list.files(input_dir),value = TRUE)
@@ -169,6 +172,7 @@ for (j in 1:nrow(pairs_strategies)) {
   
   carryforward_trades2 <- carryforward_trades %>% 
     dplyr::rename(`ShortOpenPrice` = `shortOpenPrice`) %>% 
+    dplyr::filter(`StrategyName` == "INDEXBASE") %>% 
     dplyr::mutate(`Pair` = gsub("\\[","",`Pair`)) %>% 
     dplyr::mutate(`Pair` = gsub("\\]","",`Pair`)) %>% 
     dplyr::mutate(`LongQuantity` = as.numeric(`LongQuantity`)) %>% 
@@ -233,14 +237,20 @@ for (j in 1:nrow(pairs_strategies)) {
   all_trades2 <- all_trades %>% 
     dplyr::group_by(`Symbol`,`TradeDate`,`Type`) %>% 
     dplyr::summarise(`TotalCount` = sum(`Quantity`)) %>% 
-    dplyr::group_by(`lookup_symbol` = paste0(`Symbol`,"_",`Type`,"_",`TradeDate`))
+    dplyr::group_by(`lookup_symbol` = paste0(`Symbol`,"_",`Type`,"_",`TradeDate`)) %>% 
+    dplyr::filter(`TradeDate` == report_date)
   
   
   final_report <- all_trades2 %>% 
-    dplyr::left_join(statement3,by=c("lookup_symbol" = "TWS_lookup_symbol"))
+    dplyr::left_join(statement3,by=c("lookup_symbol" = "TWS_lookup_symbol")) %>% 
+    dplyr::mutate(`TradeDifference` = `TotalCount` - `TWS_TotalCount`)
+  
   
   write.csv(final_report,paste0(output_dir,today_date,"_",temp_strategy,"_trade_count.csv"),row.names = FALSE)
   
 }
+
+
+
 
 
